@@ -1,0 +1,7 @@
+/build/cfg/
+/build/data/
+/build/RUNNINGDATA/
+/build/CMakeFiles/
+CMakeCache.txt
+*.cmake
+Makefile
