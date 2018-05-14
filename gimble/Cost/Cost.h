@@ -27,6 +27,7 @@ public:
 	~Cost();
 private:
 	std::shared_ptr<ModelDetection> detector = std::make_shared<ModelDetection>();
+	std::shared_ptr<ModelDetection> detector_people = std::make_shared<ModelDetection>();
 	std::shared_ptr<ModelDetection> detector_face = std::make_shared<ModelDetection>();
 	std::vector<cv::Rect> img_rect;
 	///////the number of blocks
@@ -88,7 +89,7 @@ public:
 	int video_initflow(cv::Mat src);
 	int video_preflow(cv::Mat src);
 	int SetBlock(cv::Mat img);
-	cv::Mat SetFaceBlock(cv::Mat ref_people, cv::Mat local, cv::Mat ref, cv::Point current_point);
+	cv::Mat SetFaceBlock(cv::Mat local, cv::Mat ref, cv::Point current_point);
 	int GetSum(cv::Mat input);
 	std::vector<int> choose_maxs(std::vector<int> sum);
 	int find_min(std::vector<int> index, std::vector<int>sum);
@@ -114,7 +115,7 @@ public:
 	std::vector<cv::Mat>NeedToShow;
 	cv::Rect tracking_roi;
 	int current_id;
-	std::unordered_map<int, bool>is_face;
+	std::vector<int> is_face_id;
 	void tracking(cv::Mat img);
 	cv::Mat merge_img(std::vector<cv::Mat>frame_seg);
 	int SeekNextDst(cv::Mat src, cv::Point& dst_point);

@@ -525,7 +525,6 @@ float *network_predict(network net, float *input)
 #ifdef GPU
     if(gpu_index >= 0)  
     {
-        printf("using GPU\n");
         return network_predict_gpu(net, input);
     }
 #endif

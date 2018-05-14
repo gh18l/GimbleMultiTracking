@@ -594,7 +594,7 @@ int main(int argc, char* argv[]) {
 		ref.copyTo(ref_temp);
 		gimutil.colorCorrectRGB(local, result_temp);
 		//set current_id and dst_point, decides to see 
-		if (index > 50 && cost.SeekNextDst(ref_temp, dst_point) == 0 ) 
+		if (index > 20 && cost.SeekNextDst(ref_temp, dst_point) == 0 ) 
 		{
 			if(gimutil.detect_move(dst_point) != 0)
 			{

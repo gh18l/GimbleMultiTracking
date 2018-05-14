@@ -9,7 +9,7 @@
 #include "opencv2/highgui.hpp"
 
 #include <stdio.h>
-
+#include <unordered_map>
 #include "GenCameraDriver.h"
 using namespace std;
 
@@ -127,6 +127,7 @@ int Cost::init_people_detection(cv::Mat img)
 {
 	std::string cfgfile = "/home/lgh/Documents/gimbleMulti/YOLO/yolov3.cfg";
 	std::string weightfile = "/home/lgh/Documents/gimbleMulti/YOLO/yolov3.weights";
+	detector_people->init(cfgfile, weightfile);
 	detector->init(cfgfile, weightfile);
 	SetBlock(img);
 	return 0;
@@ -141,11 +142,10 @@ int Cost::init_face_detection()
 }
 
 //according to the ref tracking, to choose the people in local
-cv::Mat Cost::SetFaceBlock(cv::Mat ref_people,cv::Mat local,cv::Mat ref, cv::Point current_point)
+cv::Mat Cost::SetFaceBlock(cv::Mat local,cv::Mat ref, cv::Point current_point)
 {
 	cv::Rect current_roi = tracking_roi;   //output from deepsort
-	std::vector<cv::Rect> rois = detector->detect(local);
-	std::cout<<"rois size is          "<<rois.size()<<std::endl;
+	std::vector<cv::Rect> rois = detector_people->detect(local);
 	if(rois.size() == 0)
 	{
 		rois.push_back(cv::Rect(1000,750,200,100));
@@ -201,10 +201,10 @@ cv::Mat Cost::SetFaceBlock(cv::Mat ref_people,cv::Mat local,cv::Mat ref, cv::Poi
 //////detect the face according to the detected people
 int Cost::face_detection(cv::Mat local,cv::Mat ref,cv::Point current_point)
 {
-	cv::Mat Vec_people = SetFaceBlock(ref_people, local,ref, current_point); //�ҵ����п��ܵ����˿�
+	cv::Mat Vec_people = SetFaceBlock(local,ref, current_point); //�ҵ����п��ܵ����˿�
 	if (find_face == 0)
 	{
-		is_face[current_id] = 0;
+		//is_face[current_id] = 0;
 		return -1;
 	}
 	else
@@ -219,7 +219,7 @@ int Cost::face_detection(cv::Mat local,cv::Mat ref,cv::Point current_point)
 			cv::resize(temp,temp,cv::Size(600,600));
 			NeedToShow.push_back(temp);
 		}
-		is_face[current_id] = 1;
+		is_face_id.push_back(current_id);
 		find_face = 0;
 		return 0;
 	}
@@ -300,28 +300,49 @@ void Cost::tracking(cv::Mat img)
     	{
     		tmp(0) -= frame1.cols;
 			cv::Rect rect = cv::Rect(tmp(0), tmp(1), tmp(2), tmp(3));
-			cv::rectangle(frame2, rect, cv::Scalar(255, 255, 0), 2);
+			cv::rectangle(frame2, rect, cv::Scalar(255, 255, 0), 4);
 			if(result[k].first > max_cap)
 			{
 				result[k].first = result[k].first % max_cap;
 			}
 			sprintf(showMsg, "%d", result[k].first);
-			cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 2);
+			
+			std::vector<int>::iterator result = find(is_face_id.begin(),is_face_id.end(),result[k].first);
+			if(result == is_face_id.end())  
+			{
+				cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
+			}
+			else
+			{
+				cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 0, 0), 4);
+			}
+
+			
     	}
 		else
 		{
 			cv::Rect rect = cv::Rect(tmp(0), tmp(1), tmp(2), tmp(3));
-			cv::rectangle(frame1, rect, cv::Scalar(255, 255, 0), 2);
+			cv::rectangle(frame1, rect, cv::Scalar(255, 255, 0), 4);
 			if(result[k].first > max_cap)
 			{
 				result[k].first = result[k].first % max_cap;
 			}
 			sprintf(showMsg, "%d", result[k].first);
-			cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 2);
+
+			std::vector<int>::iterator result = find(is_face_id.begin(),is_face_id.end(),result[k].first);
+			if(result == is_face_id.end()) 
+			{
+				cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
+			}
+			else
+			{
+				cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 0, 0), 4);
+			}
+
+			
 		}
 		
 	}
-	std::cout<<"                           "<<mytracker.tracks.size()<<std::endl;
 	frame1.copyTo(frame_seg[0]);
 	frame2.copyTo(frame_seg[1]);
 		

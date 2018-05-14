@@ -338,17 +338,18 @@ std::vector<cv::Rect> ModelDetection::detect(cv::Mat frame)
 	cv::Mat frame_temp;
 	cv::resize(frame,frame_temp,cv::Size(net.w,net.h));
 	IplImage src = frame_temp;
-	image im = ipl_to_image(&src);   //20ms
-	rgbgr_image(im);
+	image im1 = ipl_to_image(&src);   //20ms
+	rgbgr_image(im1);
 	layer l = net.layers[net.n-1];
 	
-	float *X = im.data;
-
+	float *X = im1.data;
+	std::cout<<".............................................."<<std::endl;
 	network_predict(net, X);
 	int nboxes = 0;
 	int letterbox = 0;
 	detection *dets = get_network_boxes(&net,width_frame,height_frame,thresh,0.5,0,1,&nboxes,letterbox);
 	if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
+
 	std::vector<cv::Rect> rois;
 	for(int i = 0;i<nboxes;i++)
 	{
@@ -374,7 +375,7 @@ std::vector<cv::Rect> ModelDetection::detect(cv::Mat frame)
 		rois.push_back(roi);
 	}
 
-	free_image(im);
+	free_image(im1);
 
 	return rois;
 }
