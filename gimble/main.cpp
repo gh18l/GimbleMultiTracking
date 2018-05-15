@@ -57,7 +57,7 @@
 using namespace std;
 
 #define coe_gain 2.5
-
+extern int showSub;
 
 CSerial serial;
 GimUtil gimutil;
@@ -79,7 +79,7 @@ bool startTracking_flag = 0;
 
 int delay_gimble()
 {
-	gimutil.sleep(1500);
+	gimutil.sleep(1000);
 	return 0;
 }
 int collectdelay_gimble()
@@ -171,14 +171,53 @@ void init(cv::Point init)    //�����˹����
 	gimutil.find_position(ref, local, gimutil.current_point);    //update now point
 	std::cout << gimutil.current_point << std::endl;
 	//init picture parameters
-
-
 }
 void camera_close()
 {
 	cameraPtr->stopCaptureThreads();
 	cameraPtr->release();
 }
+
+void onMouse(int event, int x, int y, int, void*)
+{
+	if(event != cv::EVENT_LBUTTONDOWN)
+		return ;
+	//std::cout<<"pause                       ......................"<<std::endl;
+	if(cost.finish_push == 0)
+	{
+		while(1)
+		{
+			if(cost.finish_push == 1)
+				break;
+		}
+	}
+	std::cout<<"pause                       ......................"<<std::endl;
+	for(std::unordered_map<int, cv::Rect>::iterator iter = cost.current_tracking.begin(); iter != cost.current_tracking.end(); iter++)
+	{
+		if(Cost::dotinrect(x, y, iter->second) == 1)
+		{
+			std::unordered_map<int, cv::Mat>::iterator super = cost.superpixel_people.find(iter->first);
+			if(super == cost.superpixel_people.end())
+				break;
+			else
+			{
+				if(cost.NeedToShow.size() < showSub)
+					cost.NeedToShow.push_back(cost.superpixel_people[iter->first]);
+				else
+				{
+					cost.superpixel_people[iter->first].copyTo(cost.NeedToShow[cost.mouse_index]);
+					cost.mouse_index++;
+					if(cost.mouse_index > 5)
+						cost.mouse_index = 0;
+				}	
+			}
+			
+		}
+	}
+}
+
+
+
 
 void collection(std::vector<cv::Mat>& imgs)
 {
@@ -583,6 +622,9 @@ int main(int argc, char* argv[]) {
 	display.display_init(result);
 	cost.init_people_detection(ref);
 	cost.init_face_detection();
+
+	cv::namedWindow("tracking");
+	cv::setMouseCallback("tracking", onMouse, 0);
 	cv::Mat ref_temp;
 	int index = 0;
 	cost.startTh();
@@ -641,7 +683,7 @@ int main(int argc, char* argv[]) {
 		if (cost.thread_flag == 1) 
 		{
 			cv::Mat tracking_temp;
-			cv::resize(cost.show_opencv, tracking_temp, cv::Size(800, 600));
+			cv::resize(cost.show_opencv, tracking_temp, cv::Size(1200, 800));
 			cv::imshow("tracking", tracking_temp);
 			cv::waitKey(30);
 		}

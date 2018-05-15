@@ -7,6 +7,7 @@
 #include "opencv2/video/background_segm.hpp"
 #include "opencv2/videoio.hpp"
 #include "opencv2/highgui.hpp"
+#include <opencv2/opencv.hpp>
 
 #include <stdio.h>
 #include <unordered_map>
@@ -29,6 +30,51 @@ Cost::Cost()
 	current_show.resize(2);   //ֻ��ʾ����
 }
 Cost::~Cost() {}
+
+bool Cost::dotinrect(int x, int y, cv::Rect rect)
+{
+	if(x>rect.x && x<rect.x+rect.width && y>rect.y && y<rect.y+rect.height)
+		return 1;
+	else
+		return 0;
+}
+
+// void Cost::onMouse(int event, int x, int y, int, void*)
+// {
+// 	if(event != cv::EVENT_LBUTTONDOWN)
+// 		return ;
+// 	if(finish_push == 0)
+// 	{
+// 		while(1)
+// 		{
+// 			if(finish_push == 1)
+// 				break;
+// 		}
+// 	}
+
+// 	for(std::unordered_map<int, cv::Rect>::iterator iter = current_tracking.begin(); iter != current_tracking.end(); iter++)
+// 	{
+// 		if(dotinrect(x, y, iter->second) == 1)
+// 		{
+// 			std::unordered_map<int, cv::Mat>::iterator super = superpixel_people.find(iter->first);
+// 			if(super == superpixel_people.end())
+// 				break;
+// 			else
+// 			{
+// 				if(NeedToShow.size() < showSub)
+// 					NeedToShow.push_back(superpixel_people[iter->first]);
+// 				else
+// 				{
+// 					superpixel_people[iter->first].copyTo(NeedToShow[mouse_index]);
+// 					mouse_index++;
+// 					if(mouse_index > 7)
+// 						mouse_index = 0;
+// 				}	
+// 			}
+			
+// 		}
+// 	}
+// } 
 
 
 int Cost::video_preflow(cv::Mat src)
@@ -230,7 +276,7 @@ void Cost::add_id(int current_id, cv::Mat img)
 	std::string text = std::to_string(current_id);
 	int baseline;
 	cv::Size text_size = cv::getTextSize(text, CV_FONT_HERSHEY_SIMPLEX, 0.5, 1.5, &baseline);
-	cv::putText(img, text, cv::Point(0, text_size.height), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1.5);
+	cv::putText(img, text, cv::Point(0, text_size.height), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 4);
 	
 }
 
@@ -276,23 +322,26 @@ void Cost::tracking(cv::Mat img)
 
 	char showMsg[10];
 
-	for(unsigned int k = 0; k < detections.size(); k++) 
-	{
-		DETECTBOX tmpbox = detections[k].tlwh;
-		if(detections[k].aa == 0)
-		{
-			cv::Rect rect(tmpbox(0), tmpbox(1), tmpbox(2), tmpbox(3));
-			cv::rectangle(frame1, rect, cv::Scalar(0,0,255), 4);
-		}
+	// for(unsigned int k = 0; k < detections.size(); k++) 
+	// {
+	// 	DETECTBOX tmpbox = detections[k].tlwh;
+	// 	if(detections[k].aa == 0)
+	// 	{
+	// 		cv::Rect rect(tmpbox(0), tmpbox(1), tmpbox(2), tmpbox(3));
+	// 		cv::rectangle(frame1, rect, cv::Scalar(0,0,255), 4);
+	// 	}
 				
-		if(detections[k].aa == 1)
-		{
-			cv::Rect rect(tmpbox(0) - frame1.cols, tmpbox(1), tmpbox(2), tmpbox(3));	
-			cv::rectangle(frame2, rect, cv::Scalar(0,0,255), 4);
-		}
+	// 	if(detections[k].aa == 1)
+	// 	{
+	// 		cv::Rect rect(tmpbox(0) - frame1.cols, tmpbox(1), tmpbox(2), tmpbox(3));	
+	// 		cv::rectangle(frame2, rect, cv::Scalar(0,0,255), 4);
+	// 	}
 				
-	}
+	// }
 
+
+	current_tracking.clear();
+	finish_push = 0;
 	for(unsigned int k = 0; k < result.size(); k++) 
 	{
 		DETECTBOX tmp = result[k].second;
@@ -300,20 +349,24 @@ void Cost::tracking(cv::Mat img)
     	{
     		tmp(0) -= frame1.cols;
 			cv::Rect rect = cv::Rect(tmp(0), tmp(1), tmp(2), tmp(3));
-			cv::rectangle(frame2, rect, cv::Scalar(255, 255, 0), 4);
 			if(result[k].first > max_cap)
 			{
 				result[k].first = result[k].first % max_cap;
 			}
+
+			current_tracking[result[k].first] = cv::Rect(rect.x + frame1.cols, rect.y, rect.width, rect.height);
+
 			sprintf(showMsg, "%d", result[k].first);
 			
-			std::vector<int>::iterator result = find(is_face_id.begin(),is_face_id.end(),result[k].first);
-			if(result == is_face_id.end())  
+			std::vector<int>::iterator iter = find(is_face_id.begin(),is_face_id.end(),result[k].first);
+			if(iter == is_face_id.end())  
 			{
+				cv::rectangle(frame2, rect, cv::Scalar(255, 255, 0), 2);
 				cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
 			}
 			else
 			{
+				cv::rectangle(frame2, rect, cv::Scalar(255, 0, 0), 2);
 				cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 0, 0), 4);
 			}
 
@@ -322,20 +375,24 @@ void Cost::tracking(cv::Mat img)
 		else
 		{
 			cv::Rect rect = cv::Rect(tmp(0), tmp(1), tmp(2), tmp(3));
-			cv::rectangle(frame1, rect, cv::Scalar(255, 255, 0), 4);
 			if(result[k].first > max_cap)
 			{
 				result[k].first = result[k].first % max_cap;
 			}
+
+			current_tracking[result[k].first] = rect;
+
 			sprintf(showMsg, "%d", result[k].first);
 
-			std::vector<int>::iterator result = find(is_face_id.begin(),is_face_id.end(),result[k].first);
-			if(result == is_face_id.end()) 
+			std::vector<int>::iterator iter = find(is_face_id.begin(),is_face_id.end(),result[k].first);
+			if(iter == is_face_id.end()) 
 			{
+				cv::rectangle(frame1, rect, cv::Scalar(255, 255, 0), 2);
 				cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
 			}
 			else
 			{
+				cv::rectangle(frame1, rect, cv::Scalar(255, 0, 0), 2);
 				cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 0, 0), 4);
 			}
 
@@ -343,6 +400,7 @@ void Cost::tracking(cv::Mat img)
 		}
 		
 	}
+	finish_push = 1;
 	frame1.copyTo(frame_seg[0]);
 	frame2.copyTo(frame_seg[1]);
 		
@@ -377,10 +435,10 @@ int Cost::SeekNextDst(cv::Mat src, cv::Point& dst_point)
 	}
 	for(int i = 0;i < mytracker.tracks.size();i++)
 	{
-		std::vector<int>::iterator result = find(tracked_id.begin(),tracked_id.end(),mytracker.tracks[i].track_id);
-		if(result == tracked_id.end())
+		std::unordered_map<int, cv::Mat>::iterator result = find(superpixel_people.begin(),superpixel_people.end(),mytracker.tracks[i].track_id);
+		if(result == superpixel_people.end())
 		{
-			tracked_id.push_back(mytracker.tracks[i].track_id);
+			//tracked_id.push_back(mytracker.tracks[i].track_id);
 			current_id = mytracker.tracks[i].track_id;
 			index = i;
 			break;

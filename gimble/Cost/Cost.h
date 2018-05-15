@@ -109,7 +109,7 @@ private:
 public:
 	cv::Mat ref_people;
 	std::vector<cv::Mat> current_show;
-	int max_cap = 100;
+	int max_cap = 1000;
 	std::vector<int>tracked_id;   //id has tracked
 	std::unordered_map<int, cv::Mat>superpixel_people;
 	std::vector<cv::Mat>NeedToShow;
@@ -120,6 +120,12 @@ public:
 	cv::Mat merge_img(std::vector<cv::Mat>frame_seg);
 	int SeekNextDst(cv::Mat src, cv::Point& dst_point);
 	void add_id(int current_id, cv::Mat img);
+
+	static bool dotinrect(int x, int y, cv::Rect rect);
+	//void onMouse(int event, int x, int y, int, void*);
+	std::unordered_map<int, cv::Rect> current_tracking;
+	bool finish_push; //finish push into current_tracking
+	int mouse_index = 0;
 	tracker mytracker;
 };
 

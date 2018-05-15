@@ -21,7 +21,7 @@ float fov = 45.0f;
 bool firstMouse = true;
 Shader ourShader;
 unsigned int VBO, VAO;
-int showSub = 8;
+int showSub = 6;
 std::vector<unsigned int>VAOsub(showSub);
 std::vector<unsigned int>VBOsub(showSub);
 std::vector<unsigned int>texturesub(showSub);
