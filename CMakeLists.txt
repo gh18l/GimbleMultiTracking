@@ -35,7 +35,6 @@ if ( WIN32 )
 endif()
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
-message(${OpenCV_INCLUDE_DIRS})
 
 # opengl
 find_package(OpenGL REQUIRED)

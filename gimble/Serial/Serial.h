@@ -11,9 +11,9 @@
 class CSerial
 {
 public:
-	int UART0_Open(int fd,char* port);
+	static int UART0_Open(int fd,char* port);
 	void UART0_Close(int fd);
-	int UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity);
+	static int UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity);
 	int UART0_Init(int fd, int speed,int flow_ctrl,int databits,int stopbits,int parity);
 	int UART0_Recv(int fd, char *rcv_buf,int data_len);
 	int UART0_Send(int fd, char *send_buf,int data_len);
@@ -23,5 +23,5 @@ public:
 	int Serial_Send_Yaw(float value);
 	int Serial_Send_Pitch(float value);
 	void Serial_Init();
-	int fd; 
+	static int fd; 
 };

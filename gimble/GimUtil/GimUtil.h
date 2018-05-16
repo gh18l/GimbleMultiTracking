@@ -19,10 +19,7 @@
 
 class GimUtil{
 public:
-    int sleep(int miliseconds) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
-		return 0;
-	}
+    static int sleep(int miliseconds);
     cv::Mat SEDDetector(cv::Mat img, float scale);
     int colorCorrectRGB(cv::Mat & srcImg, cv::Mat dstImg);
     bool isInside(cv::Point2f pt, cv::Rect rect);
@@ -34,7 +31,7 @@ public:
     int find_position(cv::Mat refImg, cv::Mat localImg, cv::Point &out_point);
 	int init_stitcher();
 	int gimble_find_position(cv::Mat refImg, cv::Mat localImg, cv::Point ref_point, float region_mul,cv::Point &out_point);
-
+    void get_move_coe();
 public:
     float dX = 40.0, X_MIN = 0, dY = 30.0, Y_MIN = 0;
 	int Row = 11;
@@ -42,8 +39,12 @@ public:
     cv::Point current_point;
 	cv::Point2f current_pulse;
     cv::Size sizeBlock;
+    float move_coe_x = 6.4;   //4.0*1.6 -> 25mm    4.0 -> 16mm
+    float move_coe_y = 4.8;   //3.0*1.6 -> 25mm    3.0 -> 16mm
 public:
     cv::Ptr<cv::ximgproc::StructuredEdgeDetection> ptr;
     float scale;
+    int video_width;
+    int video_height;
 };
 #endif

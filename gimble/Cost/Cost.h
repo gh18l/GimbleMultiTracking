@@ -113,6 +113,7 @@ public:
 	std::vector<int>tracked_id;   //id has tracked
 	std::unordered_map<int, cv::Mat>superpixel_people;
 	std::vector<cv::Mat>NeedToShow;
+	int NeedToShow_index = 0;
 	cv::Rect tracking_roi;
 	int current_id;
 	std::vector<int> is_face_id;

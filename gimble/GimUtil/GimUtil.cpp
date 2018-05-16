@@ -4,6 +4,12 @@
 GimUtil::GimUtil(){}
 GimUtil::~GimUtil(){}
 
+int GimUtil::sleep(int miliseconds)
+{
+	std::this_thread::sleep_for(std::chrono::milliseconds(miliseconds));
+		return 0;
+}
+
 bool GimUtil::isInside(cv::Point2f pt, cv::Rect rect) {
 	if (rect.contains(pt))
 		return true;
@@ -113,7 +119,7 @@ int GimUtil::gimble_find_position(cv::Mat refImg, cv::Mat localImg, cv::Point re
 
 int GimUtil::init_stitcher()
 {
-	scale = 0.118;
+	scale = 0.185;
 	ptr = cv::ximgproc::createStructuredEdgeDetection("/home/lgh/Documents/gimbleMulti/model/model.yml");
 	return 0;
 }
@@ -122,11 +128,11 @@ int GimUtil::move(cv::Point& dst)       //�������еĵ�ǰ��͵
 {
 	float pulse_delta;
 	cv::Point2f dst_pulse;
-	pulse_delta = (dst.y - current_point.y) / 3.0;
+	pulse_delta = (dst.y - current_point.y) / move_coe_y;
 	dst_pulse.y = current_pulse.y - pulse_delta;
 	current_pulse.y = dst_pulse.y;
 
-	pulse_delta = (dst.x - current_point.x) / 4.0;  //3.0
+	pulse_delta = (dst.x - current_point.x) / move_coe_x;  //3.0
 	dst_pulse.x = current_pulse.x - pulse_delta;
 	current_pulse.x = dst_pulse.x;
 
@@ -140,7 +146,7 @@ int GimUtil::detect_move(cv::Point dst)       //�������еĵ�ǰ�
 {
 	float pulse_delta;
 	cv::Point2f dst_pulse;
-	pulse_delta = (dst.y - current_point.y) / 3.0;
+	pulse_delta = (dst.y - current_point.y) / move_coe_y;
 	dst_pulse.y = current_pulse.y - pulse_delta;
 	if (dst_pulse.y >= PM + 120 - dY)    //��̨ת������ȫ��ͼ��Χ
 	{
@@ -153,7 +159,7 @@ int GimUtil::detect_move(cv::Point dst)       //�������еĵ�ǰ�
 		std::cout << "dst_pulse.y <= PM + 120 - dY*Row" << std::endl;
 	}
 
-	pulse_delta = (dst.x - current_point.x) / 4.0;  //3.0
+	pulse_delta = (dst.x - current_point.x) / move_coe_x;  //3.0
 	dst_pulse.x = current_pulse.x - pulse_delta;
 	if (dst_pulse.x >= YM + 180 - dX)
 	{

@@ -190,7 +190,26 @@ int Cost::init_face_detection()
 //according to the ref tracking, to choose the people in local
 cv::Mat Cost::SetFaceBlock(cv::Mat local,cv::Mat ref, cv::Point current_point)
 {
-	cv::Rect current_roi = tracking_roi;   //output from deepsort
+	cv::Rect current_roi;
+	for(int i = 0; i < mytracker.tracks.size(); i++)
+	{
+		if(mytracker.tracks[i].track_id == current_id)
+		{
+			cv::Rect rect(mytracker.tracks[i].to_tlwh()(0),mytracker.tracks[i].to_tlwh()(1),
+					mytracker.tracks[i].to_tlwh()(2),mytracker.tracks[i].to_tlwh()(3)); 
+			current_roi = rect;
+			break;
+		}
+		if(i == mytracker.tracks.size() - 1)
+		{
+			find_face = 0;
+			std::cout<<"tracking lost!!!!!!!!!!!!!!!!!"<<std::endl;
+			return local;
+		}
+	}
+	
+	
+	//cv::Rect current_roi = tracking_roi;   //output from deepsort
 	std::vector<cv::Rect> rois = detector_people->detect(local);
 	if(rois.size() == 0)
 	{
@@ -251,7 +270,7 @@ int Cost::face_detection(cv::Mat local,cv::Mat ref,cv::Point current_point)
 	if (find_face == 0)
 	{
 		//is_face[current_id] = 0;
-		return -1;
+		return 0;
 	}
 	else
 	{
@@ -265,18 +284,27 @@ int Cost::face_detection(cv::Mat local,cv::Mat ref,cv::Point current_point)
 			cv::resize(temp,temp,cv::Size(600,600));
 			NeedToShow.push_back(temp);
 		}
+		else
+		{
+			cv::resize(temp,temp,cv::Size(600,600));
+			temp.copyTo(NeedToShow[NeedToShow_index++]);
+			if(NeedToShow_index >= showSub)
+				NeedToShow_index = 0;
+		}
 		is_face_id.push_back(current_id);
 		find_face = 0;
 		return 0;
 	}
+
+	std::cout<<"face finish......................"<<std::endl;
 }
 
 void Cost::add_id(int current_id, cv::Mat img)
 {
 	std::string text = std::to_string(current_id);
 	int baseline;
-	cv::Size text_size = cv::getTextSize(text, CV_FONT_HERSHEY_SIMPLEX, 0.5, 1.5, &baseline);
-	cv::putText(img, text, cv::Point(0, text_size.height), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 4);
+	cv::Size text_size = cv::getTextSize(text, CV_FONT_HERSHEY_SIMPLEX, 1, 2, &baseline);
+	cv::putText(img, text, cv::Point(0, text_size.height), CV_FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 0), 2);
 	
 }
 
@@ -435,10 +463,12 @@ int Cost::SeekNextDst(cv::Mat src, cv::Point& dst_point)
 	}
 	for(int i = 0;i < mytracker.tracks.size();i++)
 	{
-		std::unordered_map<int, cv::Mat>::iterator result = find(superpixel_people.begin(),superpixel_people.end(),mytracker.tracks[i].track_id);
-		if(result == superpixel_people.end())
+		//std::unordered_map<int, cv::Mat>::iterator result = find(superpixel_people.begin(),superpixel_people.end(),mytracker.tracks[i].track_id);
+		//std::unordered_map<int, cv::Mat>::iterator result = superpixel_people.find(mytracker.tracks[i].track_id);
+		std::vector<int>::iterator result = find(tracked_id.begin(),tracked_id.end(),mytracker.tracks[i].track_id);
+		if(result == tracked_id.end())
 		{
-			//tracked_id.push_back(mytracker.tracks[i].track_id);
+			tracked_id.push_back(mytracker.tracks[i].track_id);
 			current_id = mytracker.tracks[i].track_id;
 			index = i;
 			break;
@@ -448,8 +478,8 @@ int Cost::SeekNextDst(cv::Mat src, cv::Point& dst_point)
 			continue;
 		}
 	}
-	dst_point.x = mytracker.tracks[index].to_tlwh()(0) - static_cast<int>(src.cols*0.06);
-	dst_point.y = mytracker.tracks[index].to_tlwh()(1) - static_cast<int>(src.rows*0.06);
+	dst_point.x = mytracker.tracks[index].to_tlwh()(0) - static_cast<int>(src.cols*0.092);
+	dst_point.y = mytracker.tracks[index].to_tlwh()(1) - static_cast<int>(src.rows*0.092);
 
 	cv::Rect rect(mytracker.tracks[index].to_tlwh()(0),mytracker.tracks[index].to_tlwh()(1),
 					mytracker.tracks[index].to_tlwh()(2),mytracker.tracks[index].to_tlwh()(3)); 

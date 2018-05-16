@@ -79,12 +79,12 @@ bool startTracking_flag = 0;
 
 int delay_gimble()
 {
-	gimutil.sleep(1000);
+	GimUtil::sleep(1500);
 	return 0;
 }
 int collectdelay_gimble()
 {
-	gimutil.sleep(2500);
+	GimUtil::sleep(2500);
 	return 0;
 }
 
@@ -138,6 +138,7 @@ void gimbal_init(float delta_Yaw, float delta_Pitch)
 	collectdelay_gimble();
 }
 
+
 void init(cv::Point init)    //�����˹����
 {
 	// init camera
@@ -168,7 +169,25 @@ void init(cv::Point init)    //�����˹����
 	cv::Mat ref, local;
 	gimbal_init(init.x, init.y);    //ת��0,0���崦
 	shoot(ref, local);
+
+	gimutil.video_width = local.cols;
+	gimutil.video_height = local.rows;
+
 	gimutil.find_position(ref, local, gimutil.current_point);    //update now point
+	/////////////////////////////////
+	// cv::Point temp_point = gimutil.current_point;
+	// gimutil.current_pulse.x = 50 + YM;
+	// gimutil.current_pulse.y = 50 + PM;
+
+	// serial.Serial_Send_Yaw(gimutil.current_pulse.x);   
+	// serial.Serial_Send_Pitch(gimutil.current_pulse.y);
+	// collectdelay_gimble();
+	// shoot(ref, local);
+	// gimutil.find_position(ref, local, gimutil.current_point);    //update now point
+	// gimutil.move_coe_x = static_cast<float>(temp_point.x - gimutil.current_point.x) / 50.0;
+	// gimutil.move_coe_y = static_cast<float>(temp_point.y - gimutil.current_point.y) / 50.0;
+	// std::cout << gimutil.move_coe_x << "      "<< gimutil.move_coe_y <<std::endl;
+
 	std::cout << gimutil.current_point << std::endl;
 	//init picture parameters
 }
@@ -182,7 +201,13 @@ void onMouse(int event, int x, int y, int, void*)
 {
 	if(event != cv::EVENT_LBUTTONDOWN)
 		return ;
-	//std::cout<<"pause                       ......................"<<std::endl;
+	
+	float xcoe = static_cast<float>(gimutil.video_width) / 1200.0;
+	float ycoe = static_cast<float>(gimutil.video_height) / 800.0;
+	x = static_cast<float>(x) * xcoe;
+	y = static_cast<float>(y) * ycoe;
+
+
 	if(cost.finish_push == 0)
 	{
 		while(1)
@@ -191,11 +216,12 @@ void onMouse(int event, int x, int y, int, void*)
 				break;
 		}
 	}
-	std::cout<<"pause                       ......................"<<std::endl;
+
 	for(std::unordered_map<int, cv::Rect>::iterator iter = cost.current_tracking.begin(); iter != cost.current_tracking.end(); iter++)
 	{
 		if(Cost::dotinrect(x, y, iter->second) == 1)
 		{
+			
 			std::unordered_map<int, cv::Mat>::iterator super = cost.superpixel_people.find(iter->first);
 			if(super == cost.superpixel_people.end())
 				break;
@@ -640,6 +666,7 @@ int main(int argc, char* argv[]) {
 		{
 			if(gimutil.detect_move(dst_point) != 0)
 			{
+				std::cout<<"detect_move(dst_point) != 0"<<std::endl;
 				continue;
 			}
 			gimutil.move(dst_point);
