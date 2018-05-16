@@ -277,15 +277,22 @@ int Cost::face_detection(cv::Mat local,cv::Mat ref,cv::Point current_point)
 		//Vec_people.copyTo(current_show[0]);
 		cv::Mat temp;
 		Vec_people.copyTo(temp);
-		add_id(current_id, temp);
-		temp.copyTo(superpixel_people[current_id]);
+	
 		if(NeedToShow.size() < showSub)
 		{
+			trackid_showid[current_id] = NeedToShow.size() + 1;
+			add_id(trackid_showid[current_id], temp);
+			temp.copyTo(superpixel_people[current_id]);
+
 			cv::resize(temp,temp,cv::Size(600,600));
 			NeedToShow.push_back(temp);
 		}
 		else
 		{
+			trackid_showid[current_id] = NeedToShow_index + 1;
+			add_id(trackid_showid[current_id], temp);
+			temp.copyTo(superpixel_people[current_id]);
+			
 			cv::resize(temp,temp,cv::Size(600,600));
 			temp.copyTo(NeedToShow[NeedToShow_index++]);
 			if(NeedToShow_index >= showSub)
@@ -384,16 +391,25 @@ void Cost::tracking(cv::Mat img)
 
 			current_tracking[result[k].first] = cv::Rect(rect.x + frame1.cols, rect.y, rect.width, rect.height);
 
-			sprintf(showMsg, "%d", result[k].first);
+			
 			
 			std::vector<int>::iterator iter = find(is_face_id.begin(),is_face_id.end(),result[k].first);
 			if(iter == is_face_id.end())  
 			{
-				cv::rectangle(frame2, rect, cv::Scalar(255, 255, 0), 2);
-				cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
+				//cv::rectangle(frame2, rect, cv::Scalar(255, 255, 0), 2);
+				//cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
 			}
 			else
 			{
+				std::unordered_map<int, int>::iterator got = trackid_showid.find(result[k].first]);
+				if(got != trackid_showid.end())
+				{
+					sprintf(showMsg, "%d", trackid_showid[result[k].first]);
+				}
+				else
+				{
+					sprintf(showMsg, "%d", 0);
+				}
 				cv::rectangle(frame2, rect, cv::Scalar(255, 0, 0), 2);
 				cv::putText(frame2, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 0, 0), 4);
 			}
@@ -410,16 +426,24 @@ void Cost::tracking(cv::Mat img)
 
 			current_tracking[result[k].first] = rect;
 
-			sprintf(showMsg, "%d", result[k].first);
 
 			std::vector<int>::iterator iter = find(is_face_id.begin(),is_face_id.end(),result[k].first);
 			if(iter == is_face_id.end()) 
 			{
-				cv::rectangle(frame1, rect, cv::Scalar(255, 255, 0), 2);
-				cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
+				//cv::rectangle(frame1, rect, cv::Scalar(255, 255, 0), 2);
+				//cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 4);
 			}
 			else
 			{
+				std::unordered_map<int, int>::iterator got = trackid_showid.find(result[k].first]);
+				if(got != trackid_showid.end())
+				{
+					sprintf(showMsg, "%d", trackid_showid[result[k].first]);
+				}
+				else
+				{
+					sprintf(showMsg, "%d", 0);
+				}
 				cv::rectangle(frame1, rect, cv::Scalar(255, 0, 0), 2);
 				cv::putText(frame1, showMsg, cv::Point(rect.x, rect.y), CV_FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 0, 0), 4);
 			}

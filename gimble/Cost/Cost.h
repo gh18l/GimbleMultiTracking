@@ -109,8 +109,9 @@ private:
 public:
 	cv::Mat ref_people;
 	std::vector<cv::Mat> current_show;
-	int max_cap = 1000;
+	int max_cap = 10000;
 	std::vector<int>tracked_id;   //id has tracked
+	std::unordered_map<int, int> trackid_showid;
 	std::unordered_map<int, cv::Mat>superpixel_people;
 	std::vector<cv::Mat>NeedToShow;
 	int NeedToShow_index = 0;
